@@ -6,38 +6,65 @@ from __future__ import annotations
 import json
 import os
 import pathlib
-from typing import Any
+from typing import Callable
 
 
 class AutoDict(dict):
   """Dictionary that automatically adds children dictionaries as necessary
   """
 
-  def __init__(self, *args: Any, **kwargs: Any):
-    """Initialize AutoDict
-
-    Args:
-      arguments passed to dict.__init__
-    """
+  def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self["__type__"] = "AutoDict"
 
-  def __missing__(self, key: Any):
+  def __missing__(self, key: object):
     """Called when a key does not exist in the dictionary
 
     Args:
       key: Index of item that does not exist
-    
+
     Returns:
       New AutoDict created at key location
     """
     value = self[key] = AutoDict()
     return value
 
+  def contains(self, *keys: object) -> bool:
+    """Check for the presence of keys in dictionary
+
+    Supply multiple keys to check children. Only descends other AutoDicts
+
+    contains("level0", "level1", key) will return True when AutoDict is
+    structured as follows:
+    {"level0": {"level1": {"key": _ }}}
+
+    Args:
+      keys: one or more keys to check for (cascading levels)
+
+    Returns:
+      True when key(s) exist
+    """
+    first_key = keys[0]
+    if len(keys) == 1:
+      return super().__contains__(first_key)
+    if not super().__contains__(first_key):
+      return False
+    keys = keys[1:]
+    if isinstance(self[first_key], AutoDict):
+      return self[first_key].contains(*keys)
+    if len(keys) == 1:
+      return keys[0] in self[first_key]
+    return keys in self[first_key]
+
+  def __contains__(self, o: object) -> bool:
+    if isinstance(o, list):
+      return self.contains(*o)
+    return super().__contains__(o)
+
   @staticmethod
   def decoder(data: dict) -> object:
     """Decode a dictionary object into the appropriate class type
-    
+
     Args:
       data: dictionary representation of object
 
@@ -58,11 +85,11 @@ class JSONAutoDict(AutoDict):
 
   def __init__(self,
                path: str,
+               *,
                save_on_exit: bool = False,
                encoder: json.JSONEncoder = None,
-               decoder: function = AutoDict.decoder,
-               *args: Any,
-               **kwargs: Any) -> None:
+               decoder: Callable = AutoDict.decoder,
+               **kwargs) -> None:
     """Initialize JSONAutoDict
 
     Args:
@@ -73,7 +100,7 @@ class JSONAutoDict(AutoDict):
 
       other arguments passed to AutoDict.__init__
     """
-    super().__init__(*args, **kwargs)
+    super().__init__(**kwargs)
     self._save_on_exit = save_on_exit
     self._encoder = encoder
     self._decoder = decoder

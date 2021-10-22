@@ -117,3 +117,31 @@ class TestAutoDict(unittest.TestCase):
     self.assertTrue(os.path.exists(path))
 
     self.__clean_test_root()
+
+  def test_contains(self):
+    self.__clean_test_root()
+
+    section = gen_string()
+    key = gen_string()
+    value = gen_string(min_length=40, max_length=50)
+    path = str(self._TEST_ROOT.joinpath("autodict.json"))
+    with autodict.JSONAutoDict(self._TEST_CONFIG, save_on_exit=True) as c:
+      c["contains"]["section"] = section
+      c["contains"]["key"] = key
+      c["contains"]["value"] = value
+      c["contains"]["path"] = path
+
+    # No ContextManager
+    c = autodict.JSONAutoDict(path, save_on_exit=True)
+    c[key] = {key: value}
+    c[section][section][key] = value
+
+    self.assertIn(key, c)
+    self.assertNotIn(value, c)
+    self.assertTrue(c.contains(section, section, key))
+    self.assertFalse(c.contains(section, key, key))
+    self.assertIn([key, key], c)
+    self.assertNotIn([key, key, key], c)
+    c = None
+
+    self.__clean_test_root()

@@ -1,4 +1,4 @@
-"""Setup and install project_template
+"""Setup and install AutoDict
 
 Typical usage:
   python setup.py develop
@@ -13,13 +13,12 @@ import setuptools.command.develop
 
 from tools import gitsemver
 
-module_folder = "project_template"
+module_folder = "autodict"
 
 with open("README.md", encoding="utf-8") as file:
   longDescription = file.read()
 
-with open("requirements.txt", encoding="utf-8") as file:
-  required = file.read().splitlines()
+required = []
 
 version = gitsemver.get_version()
 with open(f"{module_folder}/version.py", "w", encoding="utf-8") as file:
@@ -66,9 +65,10 @@ class Develop(setuptools.command.develop.develop):
 
 
 setuptools.setup(
-    name="PythonProjectTemplate",
+    name="AutoDict",
     version=str(version),
-    description="A template repository for Python projects",
+    description=
+    "Dictionary that automatically adds children dictionaries as necessary",
     long_description=longDescription,
     long_description_content_type="text/markdown",
     license="MIT",
@@ -76,18 +76,19 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_data={module_folder: []},
     install_requires=required,
-    tests_require=[],
+    extras_require={},
     test_suite="tests",
     scripts=[],
     author="Bradley Davis",
     author_email="me@bradleydavis.tech",
-    url="https://github.com/WattsUp/PythonProjectTemplate",
+    url="https://github.com/WattsUp/AutoDict",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: MIT License",
         "Intended Audience :: Developers",
+        "Topic :: Software Development :: Libraries",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",

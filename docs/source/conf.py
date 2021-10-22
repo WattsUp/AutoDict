@@ -11,7 +11,7 @@ import os
 import requests
 import sys
 
-import version
+from autodict import version as autodict
 
 sys.path.insert(0, os.path.abspath("../.."))
 
@@ -24,12 +24,12 @@ copyright = "2021, Bradley Davis"  # pylint: disable=redefined-builtin
 author = "Bradley Davis"
 
 # The full version, including alpha/beta/rc tags
-release = version.version
+release = autodict.version
 release_date = "!not released!"
 
 r = requests.get(
     f"https://api.github.com/repos/WattsUp/{project}"
-    f"/releases/tags/{version.tag}",
+    f"/releases/tags/{autodict.tag}",
     headers={"Accept": "application/vnd.github.v3+json"})
 if r.status_code == 200:
   j = r.json()

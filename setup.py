@@ -27,12 +27,6 @@ try:
     file.write(f'version = "{version}"\n')
     file.write(f'version_full = "{version.full_str()}"\n')
     file.write(f'tag = "{version.raw}"\n')
-
-  with open("docs/source/version.py", "w", encoding="utf-8") as file:
-    file.write('"""Module version information\n"""\n\n')
-    file.write(f'version = "{version}"\n')
-    file.write(f'version_full = "{version.full_str()}"\n')
-    file.write(f'tag = "{version.raw}"\n')
 except ImportError:
   import re
   with open(f"{module_folder}/version.py", "r", encoding="utf-8") as file:

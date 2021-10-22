@@ -1,14 +1,16 @@
-# Project Title
-Short description of project goes here.
+# AutoDict
+[![Unit Test](https://github.com/WattsUp/AutoDict/actions/workflows/test.yml/badge.svg)](https://github.com/WattsUp/AutoDict/actions/workflows/test.yml) [![Pylint](https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml/badge.svg)](https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml) [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/WattsUp/36d9705addcd44fb0fccec1d23dc1338/raw/AutoDict__heads_master.json)](https://github.com/WattsUp/AutoDict/actions/workflows/coverage.yml)
+
+Dictionary that automatically adds children dictionaries as necessary. Including a json based serialization and deserialization.
 
 ----
 ## Environment
 List of dependencies for package to run.
 ### Required
-* List required installations
+* None
 
 ### Optional
-* List optional installations
+* None
 ----
 ## Installation / Build / Deployment
 Install module
@@ -20,22 +22,44 @@ For development, install as a link to repository such that code changes are used
 > python -m pip install -e .
 ```
 
-Execute module
-```bash
-> python -m project_template
-```
 ----
 ## Usage
-Explain how to use your project.
-```Python
-Give example use cases
+```python
+import autodict import AutoDict, JSONAutoDict
+
+d = AutoDict()
+d["level0"]["level1"]["level2"]["level3"]["level4"] = "value"
+print(d)
+## TODO
+
+with JSONAutoDict("autodict.json") as j:
+  j["level0"]["level1"]["level2"]["level3"]["level4"] = "value"
+
+with open("autodict.json") as f:
+  print(f.read())
+  ## TODO
+
+with JSONAutoDict("autodict.json") as j:
+  j["level0"]["key"] = "another value"
+
+with open("autodict.json") as f:
+  print(f.read())
+  ## TODO
 ```
+
 ----
 ## Running Tests
-Explain how to run the automated tests.
+To run the automated tests, execute `unittest discover`:
 ```bash
-> python setup.py test
+> python -m unittest discover tests -v
 ```
+
+To run the automated tests with coverage, execute `coverage run`:
+```bash
+> python -m coverage run
+> python -m coverage report
+```
+
 ----
 ## Development
 Code development of this project adheres to [Google Python Guide](https://google.github.io/styleguide/pyguide.html)

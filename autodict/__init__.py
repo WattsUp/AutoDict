@@ -1,12 +1,12 @@
-"""Python Project Template
+"""autodict
 
-Template repository for jump starting Python projects.
+Dictionary that automatically adds children dictionaries as necessary
 """
 
 from . import version
 
 __version__ = version.version_full
 
-__all__ = ['math']
+__all__ = ['implementation']
 
-from . import math
+from autodict.implementation import AutoDict, JSONAutoDict

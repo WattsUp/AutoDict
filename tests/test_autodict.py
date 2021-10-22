@@ -9,6 +9,7 @@ import unittest
 
 import autodict
 
+
 def gen_string(min_length: int = 8, max_length: int = 12) -> str:
   """Generate a random string with letter, numbers, and symbols
   Args:
@@ -97,8 +98,16 @@ class TestAutoDict(unittest.TestCase):
     with autodict.JSONAutoDict(path, save_on_exit=True) as c:
       c[key] = {key: value}
       c[section][section][key] = value
+    self.assertIsInstance(c[key], dict)
+    self.assertIsInstance(c[section], autodict.AutoDict)
     c = None
     self.assertTrue(os.path.exists(path))
+
+    with autodict.JSONAutoDict(path, save_on_exit=True) as c:
+      self.assertIsInstance(c[key], dict)
+      self.assertIsInstance(c[section], autodict.AutoDict)
+    c = None
+    self.__clean_test_root()
 
     # No ContextManager
     c = autodict.JSONAutoDict(path, save_on_exit=True)

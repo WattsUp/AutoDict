@@ -34,16 +34,6 @@ class AutoDict(dict):
     value = self[key] = AutoDict()
     return value
 
-
-class AutoDictEncoder(json.JSONEncoder):
-  """AutoDict JSON encoder
-  """
-
-  def default(self, o) -> dict:
-    if isinstance(o, AutoDict):
-      return dict(o)
-    return json.JSONEncoder.default(self, o)
-
   @staticmethod
   def decoder(data: dict) -> object:
     """Decode a dictionary object into the appropriate class type
@@ -58,6 +48,7 @@ class AutoDictEncoder(json.JSONEncoder):
       t = data["__type__"]
       if t == "AutoDict":
         return AutoDict(data)
+      raise TypeError(f'AutoDict decoder cannot decode __type__="{t}"')
     return data
 
 
@@ -68,8 +59,8 @@ class JSONAutoDict(AutoDict):
   def __init__(self,
                path: str,
                save_on_exit: bool = False,
-               encoder: json.JSONEncoder = AutoDictEncoder,
-               decoder: function = AutoDictEncoder.decoder,
+               encoder: json.JSONEncoder = None,
+               decoder: function = AutoDict.decoder,
                *args: Any,
                **kwargs: Any) -> None:
     """Initialize JSONAutoDict

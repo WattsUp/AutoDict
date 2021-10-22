@@ -11,8 +11,6 @@ import setuptools
 import setuptools.command.build_py
 import setuptools.command.develop
 
-from tools import gitsemver
-
 module_folder = "autodict"
 
 with open("README.md", encoding="utf-8") as file:
@@ -20,11 +18,17 @@ with open("README.md", encoding="utf-8") as file:
 
 required = []
 
-version = gitsemver.get_version()
-with open(f"{module_folder}/version.py", "w", encoding="utf-8") as file:
-  file.write('"""Module version information\n"""\n\n')
-  file.write(f'version = "{version}"\n')
-  file.write(f'version_full = "{version.full_str()}"\n')
+try:
+  from tools import gitsemver
+  version = gitsemver.get_version()
+  with open(f"{module_folder}/version.py", "w", encoding="utf-8") as file:
+    file.write('"""Module version information\n"""\n\n')
+    file.write(f'version = "{version}"\n')
+    file.write(f'version_full = "{version.full_str()}"\n')
+except ImportError:
+  import re
+  with open(f"{module_folder}/version.py", "r", encoding="utf-8") as file:
+    version = re.search(r'version = "(.*)"', file.read())[1]
 
 cwd = os.path.dirname(os.path.abspath(__file__))
 
@@ -89,9 +93,11 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     python_requires=">=3.7",
     include_package_data=True,

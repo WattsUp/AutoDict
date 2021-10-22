@@ -8,6 +8,7 @@ import string
 import unittest
 
 import autodict
+from autodict.implementation import AutoDict
 
 
 def gen_string(min_length: int = 8, max_length: int = 12) -> str:
@@ -36,6 +37,28 @@ class TestAutoDict(unittest.TestCase):
       for f in os.listdir(self._TEST_ROOT):
         os.remove(self._TEST_ROOT.joinpath(f))
       os.rmdir(self._TEST_ROOT)
+
+  def test_plain(self):
+    key = gen_string()
+    value = gen_string(min_length=40, max_length=50)
+    with autodict.JSONAutoDict(self._TEST_CONFIG, save_on_exit=True) as c:
+      c["plain"]["key"] = key
+      c["plain"]["value"] = value
+
+    plain = {key: value}
+    a = AutoDict(plain)
+    self.assertDictEqual(a.plain(), plain)
+
+  def test_str(self):
+    key = gen_string()
+    value = gen_string(min_length=40, max_length=50)
+    with autodict.JSONAutoDict(self._TEST_CONFIG, save_on_exit=True) as c:
+      c["str"]["key"] = key
+      c["str"]["value"] = value
+
+    plain = {key: value}
+    a = AutoDict(plain)
+    self.assertEqual(str(a), str(plain))
 
   def test_manual_save(self):
     self.__clean_test_root()

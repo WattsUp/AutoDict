@@ -15,7 +15,7 @@ List of dependencies for package to run.
 ## Installation / Build / Deployment
 Install module
 ```bash
-> python -m pip install .
+> python -m pip install autodict
 ```
 For development, install as a link to repository such that code changes are used.
 ```bash
@@ -25,26 +25,50 @@ For development, install as a link to repository such that code changes are used
 ----
 ## Usage
 ```python
-import autodict import AutoDict, JSONAutoDict
-
-d = AutoDict()
-d["level0"]["level1"]["level2"]["level3"]["level4"] = "value"
-print(d)
-## TODO
-
-with JSONAutoDict("autodict.json") as j:
-  j["level0"]["level1"]["level2"]["level3"]["level4"] = "value"
-
-with open("autodict.json") as f:
-  print(f.read())
-  ## TODO
-
-with JSONAutoDict("autodict.json") as j:
-  j["level0"]["key"] = "another value"
-
-with open("autodict.json") as f:
-  print(f.read())
-  ## TODO
+>>> from autodict import AutoDict, JSONAutoDict
+>>>
+>>> d = AutoDict()
+>>> print(d)
+{}
+>>> d["level0"]["level1"]["level2"]["level3"] = "value"
+>>> print(d)
+{'level0': {'level1': {'level2': {'level3': 'value'}}}}
+>>>
+>>> with JSONAutoDict("autodict.json") as j:
+...   j["level0"]["level1"]["level2"]["level3"] = "value"
+...
+>>> print(open("autodict.json").read())
+{
+  "__type__": "AutoDict",
+  "level0": {
+    "__type__": "AutoDict",
+    "level1": {
+      "__type__": "AutoDict",
+      "level2": {
+        "__type__": "AutoDict",
+        "level3": "value"
+      }
+    }
+  }
+}
+>>> with JSONAutoDict("autodict.json") as j:
+...   j["level0"]["key"] = "another value"
+...
+>>> print(open("autodict.json").read())
+{
+  "__type__": "AutoDict",
+  "level0": {
+    "__type__": "AutoDict",
+    "level1": {
+      "__type__": "AutoDict",
+      "level2": {
+        "__type__": "AutoDict",
+        "level3": "value"
+      }
+    },
+    "key": "another value"
+  }
+}
 ```
 
 ----

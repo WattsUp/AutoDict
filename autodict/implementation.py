@@ -29,6 +29,25 @@ class AutoDict(dict):
     value = self[key] = AutoDict()
     return value
 
+  def __str__(self) -> str:
+    """Get a string representation of the AutoDict
+
+    Returns:
+      String with same format as dict
+    """
+    return self.plain().__str__()
+
+  def plain(self) -> dict:
+    """Convert AutoDict to plain dict
+
+    Removes the __type__ key.
+    """
+    d = {
+        k: v.plain() if isinstance(v, AutoDict) else v for k, v in self.items()
+    }
+    d.pop("__type__")
+    return d
+
   def contains(self, *keys: object) -> bool:
     """Check for the presence of keys in dictionary
 
@@ -86,7 +105,7 @@ class JSONAutoDict(AutoDict):
   def __init__(self,
                path: str,
                *,
-               save_on_exit: bool = False,
+               save_on_exit: bool = True,
                encoder: json.JSONEncoder = None,
                decoder: Callable = AutoDict.decoder,
                **kwargs) -> None:

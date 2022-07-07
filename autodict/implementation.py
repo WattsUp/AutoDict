@@ -324,9 +324,9 @@ class JSONAutoDict(AutoDict):
       indent: Indentation parameter passed to JSONDriver.dump
     """
     self._path.parent.mkdir(parents=True, exist_ok=True)
-    self._driver.dump(self._path, self, indent=indent)
+    self._driver.dump(self, self._path, indent=indent)
 
-  def __enter__(self) -> AutoDict:
+  def __enter__(self) -> JSONAutoDict:
     """Enter ContextManager
     Returns:
       self

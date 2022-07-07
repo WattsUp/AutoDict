@@ -162,3 +162,59 @@ class TestJSONAutoDict(base.TestBase):
                                driver=autodict.DefaultJSONDriver) as d:
       self.assertIsInstance(d, autodict.AutoDict)
       self.assertDictEqual({}, d)
+
+  def test_save(self):
+    path = self._TEST_ROOT.joinpath("basic.json")
+    with autodict.JSONAutoDict(path,
+                               save_on_exit=False,
+                               driver=autodict.DefaultJSONDriver,
+                               **TestDefaultJSONDriver.JSON_BASIC) as d:
+      d.save(indent=None)
+
+    self.assertTrue(path.exists())
+
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      self.assertNotIn("\n", s)
+
+    path = self._TEST_ROOT.joinpath("folder/directory/basic.json")
+    with autodict.JSONAutoDict(path,
+                               save_on_exit=False,
+                               driver=autodict.DefaultJSONDriver,
+                               **TestDefaultJSONDriver.JSON_BASIC) as d:
+      d.save(indent=2)
+
+    self.assertTrue(path.exists())
+
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      self.assertIn("\n", s)
+      self.assertIn("  ", s)
+
+  def test_autosave(self):
+    path = self._TEST_ROOT.joinpath("basic.json")
+    with autodict.JSONAutoDict(path,
+                               save_on_exit=True,
+                               driver=autodict.DefaultJSONDriver,
+                               **TestDefaultJSONDriver.JSON_BASIC) as d:
+      d["key"] = "value"
+
+    self.assertTrue(path.exists())
+
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      self.assertNotIn("\n", s)
+
+    path.unlink()
+
+    d = autodict.JSONAutoDict(path,
+                              save_on_exit=True,
+                              driver=autodict.DefaultJSONDriver,
+                              **TestDefaultJSONDriver.JSON_BASIC)
+    d = None
+
+    self.assertTrue(path.exists())
+
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      self.assertNotIn("\n", s)

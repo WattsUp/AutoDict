@@ -1,9 +1,9 @@
 """Test base class
 """
 
-import os
 import pathlib
 import random
+import shutil
 import string
 import time
 import unittest
@@ -22,8 +22,11 @@ class TestBase(unittest.TestCase):
 
   def __clean_test_root(self):
     if self._TEST_ROOT.exists():
-      for f in os.listdir(self._TEST_ROOT):
-        os.remove(self._TEST_ROOT.joinpath(f))
+      for f in self._TEST_ROOT.iterdir():
+        if f.is_file():
+          f.unlink()
+        else:
+          shutil.rmtree(f)
 
   def gen_string(self, min_length: int = 8, max_length: int = 12) -> str:
     """Generate a random string with letter, numbers, and symbols
@@ -39,6 +42,25 @@ class TestBase(unittest.TestCase):
     return "".join(
         random.choice(all_char)
         for _ in range(random.randint(min_length, max_length)))
+
+  def assertIsJSONTypes(self, obj: object) -> None:
+    """Check object is/has only JSON basic types
+
+    Args:
+      obj: Object to check
+
+    Raises:
+      self.assert if an forbidden type is encountered
+    """
+    if isinstance(obj, dict):
+      for k, v in obj.items():
+        self.assertIsJSONTypes(k)
+        self.assertIsJSONTypes(v)
+    elif isinstance(obj, list):
+      for v in obj:
+        self.assertIsJSONTypes(v)
+    else:
+      self.assertIsInstance(obj, (str, int, float))
 
   def setUp(self):
     self.__clean_test_root()

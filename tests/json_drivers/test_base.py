@@ -4,7 +4,6 @@
 import datetime
 import json
 import uuid
-from autodict.implementation import AutoDict
 
 from tests import base
 
@@ -22,7 +21,7 @@ class TestDefaultJSONDriver(base.TestBase):
                                  55,
                                  2,
                                  tzinfo=datetime.timezone.utc)
-  JSON_BASIC = AutoDict({
+  JSON_BASIC = autodict.AutoDict({
       "datetime": _TIMESTAMP,
       "date": _TIMESTAMP.date(),
       "time": _TIMESTAMP.timetz(),

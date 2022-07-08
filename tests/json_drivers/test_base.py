@@ -36,45 +36,37 @@ class TestDefaultJSONDriver(base.TestBase):
       "other child": autodict.AutoDict(name="Not plain")
   })
 
-  def test_serialize(self):
-    path = self._DATA_ROOT.joinpath("basic_exp.json")
+  JSON_BASIC_DESERIALIZED = autodict.AutoDict({
+      "datetime": _TIMESTAMP.isoformat(),
+      "date": _TIMESTAMP.date().isoformat(),
+      "time": _TIMESTAMP.timetz().isoformat(),
+      "name": "Whoami",
+      "int": 123456789,
+      "float": 1.23456789,
+      "uuid": "5d1e22eb-d9b2-48cd-b081-d1056d267f28",
+      "list": [1, 2, 4, autodict.AutoDict(num=5)],
+      "child": autodict.AutoDict(name="Plain")
+  })
 
-    class DefaultExplicit(autodict.DefaultJSONDriver):
-      """Test with only explicit serialization options
-      """
-      IMPLICIT_TYPES_SERIALIZE = {}
-
-    d = DefaultExplicit.serialize(self.JSON_BASIC)
-    self.assertIsJSONTypes(d)
-
-    with open(path, "r", encoding="utf-8") as file:
-      j = json.load(file)
-      self.assertDictEqual(j, d)
-
-    path = self._DATA_ROOT.joinpath("basic_imp.json")
-
-    class DefaultImplicit(autodict.DefaultJSONDriver):
-      """Test with only implicit serialization options
-      """
-      EXPLICIT_TYPES_SERIALIZE = {}
-
-    d = DefaultImplicit.serialize(self.JSON_BASIC)
-    self.assertIsJSONTypes(d)
-
-    with open(path, "r", encoding="utf-8") as file:
-      j = json.load(file)
-      self.assertDictEqual(j, d)
+  def test_default(self):
+    result = autodict.DefaultJSONDriver.default(self.JSON_BASIC["date"])
+    self.assertEqual(result, self.JSON_BASIC_DESERIALIZED["date"])
 
     class UnknownType:
       pass
 
     o = UnknownType()
-    self.assertRaises(TypeError, autodict.DefaultJSONDriver.serialize, o)
+    self.assertRaises(TypeError, autodict.DefaultJSONDriver.default, o)
 
   def test_dump(self):
     path = self._TEST_ROOT.joinpath("basic.json")
 
     autodict.DefaultJSONDriver.dump(self.JSON_BASIC, path)
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      json.loads(s)  # No JSON errors
+
+    autodict.DefaultJSONDriver.dump(self.JSON_BASIC, str(path))
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
@@ -87,51 +79,42 @@ class TestDefaultJSONDriver(base.TestBase):
       s = file.read()
       json.loads(s)  # No JSON errors
 
+  def test_dumps(self):
     s = autodict.DefaultJSONDriver.dumps(self.JSON_BASIC)
     json.loads(s)  # No JSON errors
 
-  def test_deserialize(self):
-    path = self._DATA_ROOT.joinpath("basic_exp.json")
+  def test_object_hook(self):
+    key = self.gen_string()
+    value = self.gen_string()
+    d = {key: value}
 
-    with open(path, "r", encoding="utf-8") as file:
-      j = json.load(file)
-
-      d = autodict.DefaultJSONDriver.deserialize(j)
-      self.assertIsInstance(d, autodict.AutoDict)
-      self.assertDictEqual(self.JSON_BASIC, d)
-
-    path = self._DATA_ROOT.joinpath("basic_imp.json")
-
-    with open(path, "r", encoding="utf-8") as file:
-      j = json.load(file)
-
-      d = autodict.DefaultJSONDriver.deserialize(j)
-      self.assertIsInstance(d, autodict.AutoDict)
-      self.assertDictEqual(self.JSON_BASIC, d)
-
-    self.assertRaises(TypeError, autodict.DefaultJSONDriver.deserialize,
-                      {"__type__": "Unknown"})
+    result = autodict.DefaultJSONDriver.object_hook(d)
+    self.assertIsInstance(result, autodict.AutoDict)
 
   def test_load(self):
-    path = self._DATA_ROOT.joinpath("basic_exp.json")
+    path = self._DATA_ROOT.joinpath("basic.json")
 
     d = autodict.DefaultJSONDriver.load(path)
     self.assertIsInstance(d, autodict.AutoDict)
-    self.assertDictEqual(self.JSON_BASIC, d)
+    self.assertDictEqual(self.JSON_BASIC_DESERIALIZED, d)
+
+    d = autodict.DefaultJSONDriver.load(str(path))
+    self.assertIsInstance(d, autodict.AutoDict)
+    self.assertDictEqual(self.JSON_BASIC_DESERIALIZED, d)
 
     with open(path, "r", encoding="utf-8") as file:
       d = autodict.DefaultJSONDriver.load(file)
       self.assertIsInstance(d, autodict.AutoDict)
-      self.assertDictEqual(self.JSON_BASIC, d)
+      self.assertDictEqual(self.JSON_BASIC_DESERIALIZED, d)
 
   def test_loads(self):
-    path = self._DATA_ROOT.joinpath("basic_exp.json")
+    path = self._DATA_ROOT.joinpath("basic.json")
 
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       d = autodict.DefaultJSONDriver.loads(s)
       self.assertIsInstance(d, autodict.AutoDict)
-      self.assertDictEqual(self.JSON_BASIC, d)
+      self.assertDictEqual(self.JSON_BASIC_DESERIALIZED, d)
 
 
 class TestJSONAutoDict(base.TestBase):
@@ -139,13 +122,13 @@ class TestJSONAutoDict(base.TestBase):
   """
 
   def test_init(self):
-    path = self._DATA_ROOT.joinpath("basic_exp.json")
+    path = self._DATA_ROOT.joinpath("basic.json")
 
     with autodict.JSONAutoDict(path, save_on_exit=False) as d:
       self.assertIsInstance(d, autodict.AutoDict)
       self.assertIsInstance(d, autodict.JSONAutoDict)
 
-      self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC, d)
+      self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
     with autodict.JSONAutoDict(path,
                                save_on_exit=False,
@@ -153,7 +136,7 @@ class TestJSONAutoDict(base.TestBase):
       self.assertIsInstance(d, autodict.AutoDict)
       self.assertIsInstance(d, autodict.JSONAutoDict)
 
-      self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC, d)
+      self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
     path = self._TEST_ROOT.joinpath("does not exist.json")
     with autodict.JSONAutoDict(path,
@@ -217,3 +200,12 @@ class TestJSONAutoDict(base.TestBase):
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       self.assertNotIn("\n", s)
+
+  def test_large(self):
+    path = self._DATA_ROOT.joinpath("historical-events.json")
+    with autodict.JSONAutoDict(path, save_on_exit=False) as d:
+      self.assertIsInstance(d, autodict.JSONAutoDict)
+
+    path = self._DATA_ROOT.joinpath("basic_large.json")
+    with autodict.JSONAutoDict(path, save_on_exit=False) as d:
+      self.assertIsInstance(d, autodict.JSONAutoDict)

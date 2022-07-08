@@ -9,7 +9,6 @@ import io
 import json
 import os
 import pathlib
-import re
 from typing import Callable, Union
 import uuid
 
@@ -24,7 +23,7 @@ class JSONDriver(ABC):
   @abstractmethod
   def dump(cls,
            obj: AutoDict,
-           fp: Union[os.PathLike, io.IOBase],
+           fp: Union[str, os.PathLike, io.IOBase],
            indent: int = None) -> None:
     """Dump AutoDict to a file
 
@@ -51,7 +50,7 @@ class JSONDriver(ABC):
 
   @classmethod
   @abstractmethod
-  def load(cls, fp: Union[os.PathLike, io.IOBase]) -> AutoDict:
+  def load(cls, fp: Union[str, os.PathLike, io.IOBase]) -> AutoDict:
     """Load a JSON file into an AutoDict
 
     Args:
@@ -79,47 +78,15 @@ class JSONDriver(ABC):
 class DefaultJSONDriver(JSONDriver):
   """Default JSONDriver that uses the built-in json library"""
 
-  # Objects of these types will be serialized explicitly
-  # i.e. key: value => key: {"__type__": "AutoDict", "v": value}
-  EXPLICIT_TYPES_SERIALIZE = {
-      datetime.datetime: ("datetime", lambda t: t.isoformat()),
-      datetime.date: ("date", lambda t: t.isoformat()),
-      datetime.time: ("time", lambda t: t.isoformat()),
-      uuid.UUID: ("uuid", str)
-  }
-
-  EXPLICIT_TYPES_DESERIALIZE = {
-      "datetime": datetime.datetime.fromisoformat,
-      "date": datetime.date.fromisoformat,
-      "time": datetime.time.fromisoformat,
-      "uuid": uuid.UUID
-  }
-
-  # Objects of these types will be serialized implicitly
-  # i.e. key: value => key: str(value)
-  IMPLICIT_TYPES_SERIALIZE = {
+  TYPES_SERIALIZE = {
       datetime.datetime: lambda t: t.isoformat(),
       datetime.date: lambda t: t.isoformat(),
       datetime.time: lambda t: t.isoformat(),
       uuid.UUID: str
   }
 
-  IMPLICIT_TYPES_DESERIALIZE = {
-      re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\+\d{2}:\d{2})?$"):
-          datetime.datetime.fromisoformat,
-      re.compile(r"^\d{4}-\d{2}-\d{2}$"):
-          datetime.date.fromisoformat,
-      re.compile(r"^\d{2}:\d{2}:\d{2}(\+\d{2}:\d{2})?$"):
-          datetime.time.fromisoformat,
-      re.compile(
-          r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
-          r"[0-9a-f]{4}-[0-9a-f]{12}$",
-          flags=re.I):
-          uuid.UUID
-  }
-
   @classmethod
-  def serialize(cls, obj: object) -> Union[str, dict, list, int, float]:
+  def default(cls, obj: object) -> Union[str, dict, list, int, float]:
     """Serialize an object into a JSON basic type
 
     Args:
@@ -131,60 +98,34 @@ class DefaultJSONDriver(JSONDriver):
     Raises:
       TypeError upon encoding error
     """
-    if isinstance(obj, dict):
-      # Process children
-      d = {}
-      for k, v in obj.items():
-        d[k] = cls.serialize(v)
-
-      if isinstance(obj, AutoDict):
-        d["__type__"] = "AutoDict"
-      return d
-    if isinstance(obj, list):
-      l = []
-      for v in obj:
-        l.append(cls.serialize(v))
-      return l
-    if isinstance(obj, (str, int, float)):
-      return obj
-
-    # Implicit has higher priority
-    for t, op in cls.IMPLICIT_TYPES_SERIALIZE.items():
+    for t, op in cls.TYPES_SERIALIZE.items():
       op: Callable
       if isinstance(obj, t):
         return op(obj)
-
-    for t, (type_str, op) in cls.EXPLICIT_TYPES_SERIALIZE.items():
-      type_str: str
-      op: Callable
-      if isinstance(obj, t):
-        return {"__type__": type_str, "v": op(obj)}
 
     raise TypeError(f"AutoDict encoder cannot encode type='{type(obj)}'")
 
   @classmethod
   def dump(cls,
            obj: AutoDict,
-           fp: Union[os.PathLike, io.IOBase],
+           fp: Union[str, os.PathLike, io.IOBase],
            indent: int = None) -> None:
-    d = cls.serialize(obj)
-    if isinstance(fp, os.PathLike):
+    if isinstance(fp, (str, os.PathLike)):
       with open(fp, "w", encoding="utf-8") as file:
-        json.dump(d, file, indent=indent)
+        json.dump(obj, file, indent=indent, default=cls.default)
     else:
-      json.dump(d, fp, indent=indent)
+      json.dump(obj, fp, indent=indent, default=cls.default)
 
   @classmethod
   def dumps(cls, obj: AutoDict, indent: int = None) -> str:
-    d = cls.serialize(obj)
-    return json.dumps(d, indent=indent)
+    return json.dumps(obj, indent=indent, default=cls.default)
 
   @classmethod
-  def deserialize(cls, obj: Union[str, dict, list, int, float]) -> object:
-    """Deserialize a JSON basic type into an appropriate Python object
+  def object_hook(cls, d: dict) -> object:
+    """Object hook called when decoder encounters an object aka dict
 
     Args:
-      obj: JSON basic type object
+      d: JSON object literal
 
     Returns:
       Appropriate Python object
@@ -192,49 +133,18 @@ class DefaultJSONDriver(JSONDriver):
     Raises:
       TypeError upon decoding error
     """
-    if isinstance(obj, dict):
-      t = obj.pop("__type__", None)
-      if t is not None and t != "AutoDict":
-        class_type = cls.EXPLICIT_TYPES_DESERIALIZE.get(t, None)
-        if class_type is None:
-          raise TypeError(f"AutoDict decoder cannot decode __type__='{t}'")
-        return class_type(obj["v"])
-
-      # Process children
-      for k, v in obj.items():
-        obj[k] = cls.deserialize(v)
-      if t is None:
-        return obj
-      return AutoDict(obj)
-    elif isinstance(obj, list):
-      # Process children
-      for i, v in enumerate(obj):
-        obj[i] = cls.deserialize(v)
-      return obj
-    elif isinstance(obj, str):
-      # Could be an implicit type or a plain string
-      for regex, op in cls.IMPLICIT_TYPES_DESERIALIZE.items():
-        regex: re.Pattern
-        op: Callable
-        if regex.match(obj):
-          return op(obj)
-      return obj
-    else:
-      return obj
+    return AutoDict(d)
 
   @classmethod
-  def load(cls, fp: Union[os.PathLike, io.IOBase]) -> AutoDict:
-    if isinstance(fp, os.PathLike):
+  def load(cls, fp: Union[str, os.PathLike, io.IOBase]) -> AutoDict:
+    if isinstance(fp, (str, os.PathLike)):
       with open(fp, "r", encoding="utf-8") as file:
-        d = json.load(file)
-    else:
-      d = json.load(fp)
-    return cls.deserialize(d)
+        return json.load(file, object_hook=cls.object_hook)
+    return json.load(fp, object_hook=cls.object_hook)
 
   @classmethod
   def loads(cls, s: Union[str, bytes]) -> AutoDict:
-    d = json.loads(s)
-    return cls.deserialize(d)
+    return json.loads(s, object_hook=cls.object_hook)
 
 
 class JSONAutoDict(AutoDict):
@@ -264,8 +174,8 @@ class JSONAutoDict(AutoDict):
     self._driver = driver
 
     self._path = pathlib.Path(path)
-    if os.path.exists(path):
-      data = driver.load(path)
+    if self._path.exists():
+      data = driver.load(self._path)
       for k, v in data.items():
         self[k] = v
 

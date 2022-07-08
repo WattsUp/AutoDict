@@ -1,4 +1,4 @@
-"""Dictionary that automatically adds children dictionaries as necessary
+"""Default JSONDriver that uses the built-in json library
 """
 
 from __future__ import annotations
@@ -114,7 +114,11 @@ class DefaultJSONDriver(JSONDriver):
       with open(fp, "w", encoding="utf-8") as file:
         json.dump(obj, file, indent=indent, default=cls.default)
     else:
-      json.dump(obj, fp, indent=indent, default=cls.default)
+      if isinstance(fp, io.TextIOBase):
+        json.dump(obj, fp, indent=indent, default=cls.default)
+      else:
+        s = json.dumps(obj, indent=indent, default=cls.default)
+        fp.write(s.encode(encoding="utf-8"))
 
   @classmethod
   def dumps(cls, obj: AutoDict, indent: int = None) -> str:

@@ -24,7 +24,7 @@ class TestDefaultJSONDriver(base.TestBase):
   JSON_BASIC = autodict.AutoDict({
       "datetime": _TIMESTAMP,
       "date": _TIMESTAMP.date(),
-      "time": _TIMESTAMP.timetz(),
+      "time": _TIMESTAMP.time(),
       "name": "Whoami",
       "int": 123456789,
       "float": 1.23456789,
@@ -39,7 +39,7 @@ class TestDefaultJSONDriver(base.TestBase):
   JSON_BASIC_DESERIALIZED = autodict.AutoDict({
       "datetime": _TIMESTAMP.isoformat(),
       "date": _TIMESTAMP.date().isoformat(),
-      "time": _TIMESTAMP.timetz().isoformat(),
+      "time": _TIMESTAMP.time().isoformat(),
       "name": "Whoami",
       "int": 123456789,
       "float": 1.23456789,
@@ -66,6 +66,8 @@ class TestDefaultJSONDriver(base.TestBase):
       s = file.read()
       json.loads(s)  # No JSON errors
 
+    path.unlink()
+
     autodict.DefaultJSONDriver.dump(self.JSON_BASIC, str(path))
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
@@ -79,8 +81,19 @@ class TestDefaultJSONDriver(base.TestBase):
       s = file.read()
       json.loads(s)  # No JSON errors
 
+    path.unlink()
+
+    with open(path, "wb") as file:
+      autodict.DefaultJSONDriver.dump(self.JSON_BASIC, file, indent=2)
+    with open(path, "r", encoding="utf-8") as file:
+      s = file.read()
+      json.loads(s)  # No JSON errors
+
   def test_dumps(self):
     s = autodict.DefaultJSONDriver.dumps(self.JSON_BASIC)
+    json.loads(s)  # No JSON errors
+
+    s = autodict.DefaultJSONDriver.dumps(self.JSON_BASIC, indent=2)
     json.loads(s)  # No JSON errors
 
   def test_object_hook(self):

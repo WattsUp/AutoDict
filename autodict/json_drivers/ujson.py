@@ -3,24 +3,31 @@
 
 from __future__ import annotations
 
+import datetime
 import io
 import os
 from typing import Callable, Union
+import uuid
 
 try:
-  import orjson
+  import ujson
 except ImportError as e:
-  raise ImportError("Cannot use OrjsonDriver without orjson installed") from e
+  raise ImportError("Cannot use UltraJSONDriver without ujson installed") from e
 
 from autodict.implementation import AutoDict
 from autodict.json_drivers import base
 
 
-class OrjsonDriver(base.JSONDriver):
-  """JSONDriver that uses the orjson library
+class UltraJSONDriver(base.JSONDriver):
+  """JSONDriver that uses the ujson library
   """
 
-  TYPES_SERIALIZE = {}
+  TYPES_SERIALIZE = {
+      datetime.datetime: lambda t: t.isoformat(),
+      datetime.date: lambda t: t.isoformat(),
+      datetime.time: lambda t: t.isoformat(),
+      uuid.UUID: str
+  }
 
   @classmethod
   def default(cls, obj: object) -> Union[str, dict, list, int, float]:
@@ -48,23 +55,22 @@ class OrjsonDriver(base.JSONDriver):
            fp: Union[str, os.PathLike, io.IOBase],
            indent: int = None) -> None:
     if indent is None:
-      s = orjson.dumps(obj, default=cls.default)
-    else:
-      s = orjson.dumps(obj, default=cls.default, option=orjson.OPT_INDENT_2)
+      indent = 0
     if isinstance(fp, (str, os.PathLike)):
-      with open(fp, "wb") as file:
-        file.write(s)
+      with open(fp, "w", encoding="utf-8") as file:
+        ujson.dump(obj, file, indent=indent, default=cls.default)
     else:
       if isinstance(fp, io.TextIOBase):
-        fp.write(s.decode(encoding="utf-8"))
+        ujson.dump(obj, fp, indent=indent, default=cls.default)
       else:
-        fp.write(s)
+        s = ujson.dumps(obj, indent=indent, default=cls.default)
+        fp.write(s.encode(encoding="utf-8"))
 
   @classmethod
   def dumps(cls, obj: AutoDict, indent: int = None) -> str:
     if indent is None:
-      return orjson.dumps(obj, default=cls.default)
-    return orjson.dumps(obj, default=cls.default, option=orjson.OPT_INDENT_2)
+      indent = 0
+    return ujson.dumps(obj, indent=indent, default=cls.default)
 
   @classmethod
   def upgrade_dicts(
@@ -94,15 +100,15 @@ class OrjsonDriver(base.JSONDriver):
   @classmethod
   def load(cls, fp: Union[str, os.PathLike, io.IOBase]) -> AutoDict:
     return base.DefaultJSONDriver.load(fp)
-    # orjson is faster but doesn't make upgrading to AutoDicts fast
+    # ujson is faster but doesn't make upgrading to AutoDicts fast
     # if isinstance(fp, (str, os.PathLike)):
     #   with open(fp, "rb") as file:
-    #     return cls.upgrade_dicts(orjson.loads(file.read()))
+    #     return cls.upgrade_dicts(ujson.loads(file.read()))
     # fp: Union[io.BytesIO, io.StringIO]
-    # return cls.upgrade_dicts(orjson.loads(fp.read()))
+    # return cls.upgrade_dicts(ujson.loads(fp.read()))
 
   @classmethod
   def loads(cls, s: Union[str, bytes]) -> AutoDict:
     return base.DefaultJSONDriver.loads(s)
-    # orjson is faster but doesn't make upgrading to AutoDicts fast
-    # return cls.upgrade_dicts(orjson.loads(s))
+    # ujson is faster but doesn't make upgrading to AutoDicts fast
+    # return cls.upgrade_dicts(ujson.loads(s))

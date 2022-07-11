@@ -37,7 +37,8 @@ class TestSimpleJSONDriver(base.TestBase):
 
     path.unlink()
 
-    simplejson.SimpleJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, str(path))
+    simplejson.SimpleJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC,
+                                     str(path))
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
@@ -54,8 +55,8 @@ class TestSimpleJSONDriver(base.TestBase):
 
     with open(path, "wb") as file:
       simplejson.SimpleJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC,
-                                     file,
-                                     indent=2)
+                                       file,
+                                       indent=2)
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
@@ -65,7 +66,7 @@ class TestSimpleJSONDriver(base.TestBase):
     json.loads(s)  # No JSON errors
 
     s = simplejson.SimpleJSONDriver.dumps(TestDefaultJSONDriver.JSON_BASIC,
-                                        indent=2)
+                                          indent=2)
     json.loads(s)  # No JSON errors
 
   def test_object_hook(self):

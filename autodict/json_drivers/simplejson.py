@@ -59,29 +59,19 @@ class SimpleJSONDriver(base.JSONDriver):
       indent = 0
     if isinstance(fp, (str, os.PathLike)):
       with open(fp, "w", encoding="utf-8") as file:
-        simplejson.dump(obj,
-                        file,
-                        indent=indent,
-                        default=cls.default)
+        simplejson.dump(obj, file, indent=indent, default=cls.default)
     else:
       if isinstance(fp, io.TextIOBase):
-        simplejson.dump(obj,
-                        fp,
-                        indent=indent,
-                        default=cls.default)
+        simplejson.dump(obj, fp, indent=indent, default=cls.default)
       else:
-        s = simplejson.dumps(obj,
-                             indent=indent,
-                             default=cls.default)
+        s = simplejson.dumps(obj, indent=indent, default=cls.default)
         fp.write(s.encode(encoding="utf-8"))
 
   @classmethod
   def dumps(cls, obj: AutoDict, indent: int = None) -> str:
     if indent is None:
       indent = 0
-    return simplejson.dumps(obj,
-                            indent=indent,
-                            default=cls.default)
+    return simplejson.dumps(obj, indent=indent, default=cls.default)
 
   @classmethod
   def object_hook(cls, d: dict) -> object:

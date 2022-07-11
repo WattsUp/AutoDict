@@ -1,5 +1,5 @@
 # AutoDict
-[![Unit Test](https://github.com/WattsUp/AutoDict/actions/workflows/test.yml/badge.svg)](https://github.com/WattsUp/AutoDict/actions/workflows/test.yml) [![Pylint](https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml/badge.svg)](https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml) [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/WattsUp/36d9705addcd44fb0fccec1d23dc1338/raw/AutoDict__heads_master.json)](https://github.com/WattsUp/AutoDict/actions/workflows/coverage.yml)
+[![Unit Test][unittest-image]][unittest-url] [![Pylint][pylint-image]][pylint-url] [![Coverage][coverage-image]][coverage-url] [![Latest Version][pypi-image]][pypi-url]
 
 Dictionary that automatically adds children dictionaries as necessary. Including a json based serialization and deserialization.
 
@@ -94,3 +94,12 @@ Use `yapf` to format files, based on Google's guide with the exception of indent
 ---
 ## Versioning
 Versioning of this projects adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) and is implemented using git tags.  
+
+[pypi-image]: https://img.shields.io/pypi/v/AutoDict.svg
+[pypi-url]: https://pypi.python.org/pypi/AutoDict/
+[unittest-image]: https://github.com/WattsUp/AutoDict/actions/workflows/test.yml/badge.svg
+[unittest-url]: https://github.com/WattsUp/AutoDict/actions/workflows/test.yml
+[pylint-image]: https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml/badge.svg
+[pylint-url]: https://github.com/WattsUp/AutoDict/actions/workflows/lint.yml
+[coverage-image]: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/WattsUp/36d9705addcd44fb0fccec1d23dc1338/raw/AutoDict__heads_master.json
+[coverage-url]: https://github.com/WattsUp/AutoDict/actions/workflows/coverage.yml

@@ -1,6 +1,6 @@
 # coverage.py setup
 [run]
-command_line = -m unittest discover tests
+command_line = tests discover -s tests -t . --locals
 branch = True
 source = autodict
 
@@ -20,7 +20,9 @@ exclude_lines =
   # Don't complain if non-runnable code isn't run:
   if 0:
   if __name__ == .__main__.:
+  except ImportError
 
 ignore_errors = True
 precision = 2
 show_missing = True
+fail_under = 100

@@ -18,6 +18,10 @@ with open("README.md", encoding="utf-8") as file:
   longDescription = file.read()
 
 required = []
+extras_require = {
+    "test": ["coverage", "pylint"],
+    "extras": ["orjson", "ujson", "python-rapidjson", "simplejson"]
+}
 
 try:
   from tools import gitsemver
@@ -82,7 +86,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_data={module_folder: []},
     install_requires=required,
-    extras_require={},
+    extras_require=extras_require,
     test_suite="tests",
     scripts=[],
     author="Bradley Davis",

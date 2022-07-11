@@ -7,6 +7,5 @@ from autodict import version
 
 __version__ = version.version_full
 
-__all__ = ['implementation']
-
-from autodict.implementation import AutoDict, JSONAutoDict
+from autodict.implementation import AutoDict
+from autodict.json_drivers import *

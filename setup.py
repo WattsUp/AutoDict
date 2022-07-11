@@ -82,7 +82,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_data={module_folder: []},
     install_requires=required,
-    extras_require={"test": ["coverage", "pylint"], "extras": ["orjson", "ujson"]},
+    extras_require={"test": ["coverage", "pylint"], "extras": ["orjson", "ujson", "python-rapidjson"]},
     test_suite="tests",
     scripts=[],
     author="Bradley Davis",

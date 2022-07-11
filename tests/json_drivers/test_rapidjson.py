@@ -1,4 +1,4 @@
-"""Test module json_drivers.ujson
+"""Test module json_drivers.rapidjson
 """
 
 import json
@@ -8,15 +8,15 @@ from tests import base
 from tests.json_drivers.test_base import TestDefaultJSONDriver
 
 import autodict
-from autodict.json_drivers import ujson
+from autodict.json_drivers import rapidjson
 
 
-class TestUltraJSONDriver(base.TestBase):
-  """Test UltraJSONDriver
+class TestRapidJSONDriver(base.TestBase):
+  """Test RapidJSONDriver
   """
 
   def test_default(self):
-    result = ujson.UltraJSONDriver.default(
+    result = rapidjson.RapidJSONDriver.default(
         TestDefaultJSONDriver.JSON_BASIC["date"])
     self.assertEqual(result,
                      TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED["date"])
@@ -25,19 +25,19 @@ class TestUltraJSONDriver(base.TestBase):
       pass
 
     o = UnknownType()
-    self.assertRaises(TypeError, ujson.UltraJSONDriver.default, o)
+    self.assertRaises(TypeError, rapidjson.RapidJSONDriver.default, o)
 
   def test_dump(self):
     path = self._TEST_ROOT.joinpath("basic.json")
 
-    ujson.UltraJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, path)
+    rapidjson.RapidJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, path)
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
 
     path.unlink()
 
-    ujson.UltraJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, str(path))
+    rapidjson.RapidJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, str(path))
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
@@ -45,7 +45,7 @@ class TestUltraJSONDriver(base.TestBase):
     path.unlink()
 
     with open(path, "w", encoding="utf-8") as file:
-      ujson.UltraJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, file)
+      rapidjson.RapidJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC, file)
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
@@ -53,50 +53,42 @@ class TestUltraJSONDriver(base.TestBase):
     path.unlink()
 
     with open(path, "wb") as file:
-      ujson.UltraJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC,
-                                 file,
-                                 indent=2)
+      rapidjson.RapidJSONDriver.dump(TestDefaultJSONDriver.JSON_BASIC,
+                                     file,
+                                     indent=2)
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
       json.loads(s)  # No JSON errors
 
   def test_dumps(self):
-    s = ujson.UltraJSONDriver.dumps(TestDefaultJSONDriver.JSON_BASIC)
+    s = rapidjson.RapidJSONDriver.dumps(TestDefaultJSONDriver.JSON_BASIC)
     json.loads(s)  # No JSON errors
 
-    s = ujson.UltraJSONDriver.dumps(TestDefaultJSONDriver.JSON_BASIC, indent=2)
+    s = rapidjson.RapidJSONDriver.dumps(TestDefaultJSONDriver.JSON_BASIC,
+                                        indent=2)
     json.loads(s)  # No JSON errors
 
-  def test_upgrade_dicts(self):
+  def test_object_hook(self):
     key = self.gen_string()
     value = self.gen_string()
     d = {key: value}
 
-    result = ujson.UltraJSONDriver.upgrade_dicts(d)
+    result = autodict.DefaultJSONDriver.object_hook(d)
     self.assertIsInstance(result, autodict.AutoDict)
-
-    result = ujson.UltraJSONDriver.upgrade_dicts(key)
-    self.assertEqual(result, key)
-
-    l = [d, d]
-
-    result = ujson.UltraJSONDriver.upgrade_dicts(l)
-    self.assertIsInstance(result, list)
-    self.assertIsInstance(result[0], autodict.AutoDict)
 
   def test_load(self):
     path = self._DATA_ROOT.joinpath("basic.json")
 
-    d = ujson.UltraJSONDriver.load(path)
+    d = rapidjson.RapidJSONDriver.load(path)
     self.assertIsInstance(d, autodict.AutoDict)
     self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
-    d = ujson.UltraJSONDriver.load(str(path))
+    d = rapidjson.RapidJSONDriver.load(str(path))
     self.assertIsInstance(d, autodict.AutoDict)
     self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
     with open(path, "r", encoding="utf-8") as file:
-      d = ujson.UltraJSONDriver.load(file)
+      d = rapidjson.RapidJSONDriver.load(file)
       self.assertIsInstance(d, autodict.AutoDict)
       self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
@@ -105,7 +97,7 @@ class TestUltraJSONDriver(base.TestBase):
 
     with open(path, "r", encoding="utf-8") as file:
       s = file.read()
-      d = ujson.UltraJSONDriver.loads(s)
+      d = rapidjson.RapidJSONDriver.loads(s)
       self.assertIsInstance(d, autodict.AutoDict)
       self.assertDictEqual(TestDefaultJSONDriver.JSON_BASIC_DESERIALIZED, d)
 
@@ -127,11 +119,11 @@ class TestUltraJSONDriver(base.TestBase):
 
     start = time.perf_counter()
     for _ in range(n):
-      _ = ujson.UltraJSONDriver.loads(s)
-    _ = ujson.UltraJSONDriver.loads(s_large)
-    elapsed_ujson = time.perf_counter() - start
+      _ = rapidjson.RapidJSONDriver.loads(s)
+    _ = rapidjson.RapidJSONDriver.loads(s_large)
+    elapsed_rapidjson = time.perf_counter() - start
 
-    self.log_speed(elapsed_default, elapsed_ujson)
+    self.log_speed(elapsed_default, elapsed_rapidjson)
 
   def test_speed_dump(self):
     path = self._TEST_ROOT.joinpath("basic_large.json")
@@ -149,7 +141,7 @@ class TestUltraJSONDriver(base.TestBase):
     path.unlink()
 
     start = time.perf_counter()
-    ujson.UltraJSONDriver.dump(d, path)
-    elapsed_ujson = time.perf_counter() - start
+    rapidjson.RapidJSONDriver.dump(d, path)
+    elapsed_rapidjson = time.perf_counter() - start
 
-    self.log_speed(elapsed_default, elapsed_ujson)
+    self.log_speed(elapsed_default, elapsed_rapidjson)

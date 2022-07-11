@@ -1,4 +1,4 @@
-"""JSONDriver that uses the ujson library
+"""JSONDriver that uses the rapidjson library
 """
 
 from __future__ import annotations
@@ -10,16 +10,17 @@ from typing import Callable, Union
 import uuid
 
 try:
-  import ujson
+  import rapidjson
 except ImportError as e:
-  raise ImportError("Cannot use UltraJSONDriver without ujson installed") from e
+  raise ImportError(
+      "Cannot use RapidJSONDriver without rapidjson installed") from e
 
 from autodict.implementation import AutoDict
 from autodict.json_drivers import base
 
 
-class UltraJSONDriver(base.JSONDriver):
-  """JSONDriver that uses the ujson library
+class RapidJSONDriver(base.JSONDriver):
+  """JSONDriver that uses the rapidjson library
   """
 
   TYPES_SERIALIZE = {
@@ -58,28 +59,44 @@ class UltraJSONDriver(base.JSONDriver):
       indent = 0
     if isinstance(fp, (str, os.PathLike)):
       with open(fp, "w", encoding="utf-8") as file:
-        ujson.dump(obj, file, indent=indent, default=cls.default)
+        rapidjson.dump(obj,
+                       file,
+                       indent=indent,
+                       default=cls.default,
+                       datetime_mode=rapidjson.DM_ISO8601,
+                       uuid_mode=rapidjson.UM_CANONICAL)
     else:
       if isinstance(fp, io.TextIOBase):
-        ujson.dump(obj, fp, indent=indent, default=cls.default)
+        rapidjson.dump(obj,
+                       fp,
+                       indent=indent,
+                       default=cls.default,
+                       datetime_mode=rapidjson.DM_ISO8601,
+                       uuid_mode=rapidjson.UM_CANONICAL)
       else:
-        s = ujson.dumps(obj, indent=indent, default=cls.default)
+        s = rapidjson.dumps(obj,
+                            indent=indent,
+                            default=cls.default,
+                            datetime_mode=rapidjson.DM_ISO8601,
+                            uuid_mode=rapidjson.UM_CANONICAL)
         fp.write(s.encode(encoding="utf-8"))
 
   @classmethod
   def dumps(cls, obj: AutoDict, indent: int = None) -> str:
     if indent is None:
       indent = 0
-    return ujson.dumps(obj, indent=indent, default=cls.default)
+    return rapidjson.dumps(obj,
+                           indent=indent,
+                           default=cls.default,
+                           datetime_mode=rapidjson.DM_ISO8601,
+                           uuid_mode=rapidjson.UM_CANONICAL)
 
   @classmethod
-  def upgrade_dicts(
-      cls, obj: Union[dict, list, str, int, float]
-  ) -> Union[dict, list, str, int, float, AutoDict]:
-    """Traverse an object and upgrade the dicts to AutoDicts
+  def object_hook(cls, d: dict) -> object:
+    """Object hook called when decoder encounters an object aka dict
 
     Args:
-      obj: JSON basic type object
+      d: JSON object literal
 
     Returns:
       Appropriate Python object
@@ -87,28 +104,15 @@ class UltraJSONDriver(base.JSONDriver):
     Raises:
       TypeError upon decoding error
     """
-    if isinstance(obj, dict):
-      for k, v in obj.items():
-        obj[k] = cls.upgrade_dicts(v)
-      return AutoDict(obj)
-    if isinstance(obj, list):
-      for i, v in enumerate(obj):
-        obj[i] = cls.upgrade_dicts(v)
-      return obj
-    return obj
+    return AutoDict(d)
 
   @classmethod
   def load(cls, fp: Union[str, os.PathLike, io.IOBase]) -> AutoDict:
-    return base.DefaultJSONDriver.load(fp)
-    # ujson is faster but doesn't make upgrading to AutoDicts fast
-    # if isinstance(fp, (str, os.PathLike)):
-    #   with open(fp, "rb") as file:
-    #     return cls.upgrade_dicts(ujson.loads(file.read()))
-    # fp: Union[io.BytesIO, io.StringIO]
-    # return cls.upgrade_dicts(ujson.loads(fp.read()))
+    if isinstance(fp, (str, os.PathLike)):
+      with open(fp, "r", encoding="utf-8") as file:
+        return rapidjson.load(file, object_hook=cls.object_hook)
+    return rapidjson.load(fp, object_hook=cls.object_hook)
 
   @classmethod
   def loads(cls, s: Union[str, bytes]) -> AutoDict:
-    return base.DefaultJSONDriver.loads(s)
-    # ujson is faster but doesn't make upgrading to AutoDicts fast
-    # return cls.upgrade_dicts(ujson.loads(s))
+    return rapidjson.loads(s, object_hook=cls.object_hook)

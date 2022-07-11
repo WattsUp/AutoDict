@@ -1,4 +1,4 @@
-"""Test module autodict
+"""Test module json_drivers.orjson
 """
 
 import datetime
@@ -13,7 +13,7 @@ from autodict.json_drivers import orjson
 
 
 class TestOrjsonDriver(base.TestBase):
-  """Test DefaultJSONDriver
+  """Test OrjsonDriver
   """
 
   def test_default(self):
